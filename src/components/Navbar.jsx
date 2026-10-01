@@ -1,6 +1,6 @@
 import { NavLink } from 'react-router-dom';
 
-function Navbar() {
+export function Navbar() {
   return (
     <nav className="navbar">
       <NavLink to="/" className="navbar-brand">
@@ -16,5 +16,3 @@ function Navbar() {
     </nav>
   );
 }
-
-export default Navbar;

@@ -82,3 +82,4 @@ export function HomePage({ transactions, budgets }) {
     </div>
   );
 }
+
