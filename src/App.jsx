@@ -54,7 +54,7 @@ function App() {
       <main className="container">
         <Routes>
           <Route path="/" element={<HomePage transactions={transactions} budgets={budgets} />} />
-          <Route path="/transactions" element={<TransactionsPage transactions={transactions} setTransactions={setTransactions} />} />
+          <Route path="/transactions" element={<TransactionsPage transactions={transactions} setTransactions={setTransactions} categories={categories} />} />
           <Route path="/budget" element={<BudgetPage transactions={transactions} budgets={budgets} setBudgets={setBudgets} />} />
           <Route path="/analysis" element={<AnalysisPage transactions={transactions} budgets={budgets} />} />
           <Route path="/settings" element={(
