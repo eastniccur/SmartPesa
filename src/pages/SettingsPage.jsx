@@ -191,3 +191,4 @@ export function SettingsPage({ categories, setCategories, currency, setCurrency,
     </div>
   );
 }
+
