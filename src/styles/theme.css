@@ -1,0 +1,196 @@
+:root {
+  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    sans-serif;
+  color: #172033;
+  background: #f5f7fb;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+
+  --color-primary: #2563eb;
+  --color-primary-hover: #1d4ed8;
+  --color-surface: #ffffff;
+  --color-border: #e2e8f0;
+  --color-muted: #64748b;
+  --color-danger: #dc2626;
+  --color-success: #15803d;
+  --radius-card: 14px;
+  --shadow-card: 0 4px 18px rgba(15, 23, 42, 0.06);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+  border: 0;
+  border-radius: 8px;
+  padding: 10px 16px;
+  color: white;
+  background: var(--color-primary);
+  font-weight: 600;
+  transition: background 0.2s ease;
+}
+
+button:hover:not(:disabled) {
+  background: var(--color-primary-hover);
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.page-container {
+  width: min(100% - 32px, 1000px);
+  margin: 0 auto;
+  padding: 32px 0;
+}
+
+.page-header {
+  margin-bottom: 24px;
+}
+
+.page-header h1 {
+  margin: 0 0 8px;
+  font-size: clamp(1.7rem, 4vw, 2.2rem);
+}
+
+.page-header p,
+.form-card p {
+  color: var(--color-muted);
+}
+
+.form-card,
+.budget-card,
+.transaction-card {
+  padding: 22px;
+  margin-bottom: 20px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card);
+}
+
+.form-card h2,
+.budget-list h2,
+.transaction-list h2 {
+  margin-top: 0;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  margin-bottom: 18px;
+}
+
+.form-group label {
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background: white;
+  color: #172033;
+  outline: none;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+}
+
+.form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.form-actions button[type="button"],
+.budget-card button:last-child,
+.transaction-card button {
+  background: #475569;
+}
+
+.budget-card,
+.transaction-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.budget-card h3,
+.transaction-card h3 {
+  margin: 0 0 8px;
+  text-transform: capitalize;
+}
+
+.budget-card p,
+.transaction-card p {
+  margin: 5px 0;
+  color: var(--color-muted);
+}
+
+.error-message {
+  padding: 12px 14px;
+  color: var(--color-danger);
+  background: #fef2f2;
+  border-radius: 8px;
+}
+
+.success-message {
+  padding: 12px 14px;
+  color: var(--color-success);
+  background: #f0fdf4;
+  border-radius: 8px;
+}
+
+@media (max-width: 600px) {
+  .page-container {
+    width: min(100% - 24px, 1000px);
+    padding: 22px 0;
+  }
+
+  .form-card,
+  .budget-card,
+  .transaction-card {
+    padding: 16px;
+  }
+
+  .budget-card,
+  .transaction-card {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .form-actions button {
+    flex: 1;
+  }
+}
