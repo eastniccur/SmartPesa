@@ -1,15 +1,56 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/useAuth';
+import { useEffect, useState } from 'react';
+import { api } from '../services/api';
+import { useToast } from '../components/Toast';
+import { useAuth } from '../context/AuthContext';
 
 export function SettingsPage({ categories, setCategories, currency, setCurrency, onReset }) {
-  const navigate = useNavigate();
-  const { user, login, register, logout } = useAuth();
   const [categoryName, setCategoryName] = useState('');
   const [categoryMessage, setCategoryMessage] = useState('');
-  const [authView, setAuthView] = useState('login');
-  const [authMessage, setAuthMessage] = useState('');
   const [resetMessage, setResetMessage] = useState('');
+  const showToast = useToast();
+  const [profile, setProfile] = useState({ name: '', email: '', phone: '' });
+  const [profileLoading, setProfileLoading] = useState(true);
+  const [profileSaving, setProfileSaving] = useState(false);
+  const [profileMessage, setProfileMessage] = useState('');
+  const { user, login, logout } = useAuth();
+  const userId = user.id;
+
+  useEffect(() => {
+    let cancelled = false;
+    api(`/api/users/profile?user_id=${userId}`)
+      .then((data) => {
+        if (!cancelled) {
+          setProfile({ name: data.user.name, email: data.user.email, phone: data.user.phone || '' });
+        }
+      })
+      .catch((err) => { if (!cancelled) showToast(err.message); })
+      .finally(() => { if (!cancelled) setProfileLoading(false); });
+    return () => { cancelled = true; };
+  }, [showToast, userId]);
+
+  async function saveProfile(event) {
+    event.preventDefault();
+    setProfileSaving(true);
+    setProfileMessage('');
+    try {
+      const data = await api(`/api/users/profile?user_id=${userId}`, {
+        method: 'PUT',
+        body: JSON.stringify(profile),
+      });
+      setProfile({ name: data.user.name, email: data.user.email, phone: data.user.phone || '' });
+      login(data.user);
+      setProfileMessage('Profile saved.');
+      showToast('Profile saved', 'success');
+    } catch (err) {
+      setProfileMessage(err.message);
+      showToast(err.message);
+    } finally {
+      setProfileSaving(false);
+    }
+  }
+
+  const updateProfileField = (field) => (event) =>
+    setProfile({ ...profile, [field]: event.target.value });
 
   function addCategory(event) {
     event.preventDefault();
@@ -37,31 +78,6 @@ export function SettingsPage({ categories, setCategories, currency, setCurrency,
     setResetMessage('Application data restored to defaults.');
   }
 
-  async function handleAuthSubmit(event) {
-    event.preventDefault();
-    const formData = new FormData(event.currentTarget);
-    const credentials = {
-      email: String(formData.get('email')).trim(),
-      password: String(formData.get('password')),
-    };
-
-    try {
-      if (authView === 'register') {
-        await register({
-          ...credentials,
-          name: String(formData.get('name')).trim(),
-          phone: String(formData.get('phone')).trim(),
-        });
-      } else {
-        await login(credentials);
-      }
-      setAuthMessage('');
-      navigate('/');
-    } catch (error) {
-      setAuthMessage(error instanceof Error ? error.message : 'Authentication failed.');
-    }
-  }
-
   return (
     <div className="settings-page">
       <header className="settings-heading">
@@ -72,6 +88,36 @@ export function SettingsPage({ categories, setCategories, currency, setCurrency,
 
       <div className="settings-layout">
         <div className="settings-column">
+          <section className="settings-panel" aria-labelledby="profile-title">
+            <div className="settings-panel-heading">
+              <div>
+                <p className="settings-eyebrow">YOUR ACCOUNT</p>
+                <h2 id="profile-title">Profile</h2>
+              </div>
+            </div>
+            {profileLoading ? (
+              <p role="status">Loading profile...</p>
+            ) : (
+              <form className="category-form" onSubmit={saveProfile}>
+                <label className="settings-field" htmlFor="profile-name">
+                  <span>Full name</span>
+                  <input id="profile-name" value={profile.name} onChange={updateProfileField('name')} maxLength={100} required />
+                </label>
+                <label className="settings-field" htmlFor="profile-email">
+                  <span>Email</span>
+                  <input id="profile-email" type="email" value={profile.email} onChange={updateProfileField('email')} required />
+                </label>
+                <label className="settings-field" htmlFor="profile-phone">
+                  <span>Phone number</span>
+                  <input id="profile-phone" type="tel" value={profile.phone} onChange={updateProfileField('phone')} placeholder="0712 345 678" required />
+                </label>
+                <button className="button-primary" type="submit" disabled={profileSaving}>
+                  {profileSaving ? 'Saving...' : 'Save profile'}
+                </button>
+                <p className="settings-status" role="status" aria-live="polite">{profileMessage}</p>
+              </form>
+            )}
+          </section>
           <section className="settings-panel" aria-labelledby="preferences-title">
             <div className="settings-panel-heading">
               <div>
@@ -142,102 +188,15 @@ export function SettingsPage({ categories, setCategories, currency, setCurrency,
           </section>
         </div>
 
-        <section className="settings-panel auth-panel" aria-labelledby="auth-title">
+        <section className="settings-panel auth-panel" aria-labelledby="account-title">
           <div className="settings-panel-heading">
             <div>
-              <p className="settings-eyebrow">ACCOUNT ACCESS</p>
-              <h2 id="auth-title">{user ? 'Your SmartPesa account' : 'Welcome to SmartPesa'}</h2>
+              <p className="settings-eyebrow">SIGNED IN AS</p>
+              <h2 id="account-title">{user.name}</h2>
             </div>
           </div>
-          {user ? (
-            <div className="auth-user">
-              <p>Signed in as <strong>{user.name}</strong></p>
-              <p>{user.email}</p>
-              <button className="button-text-danger" type="button" onClick={logout}>Sign out</button>
-            </div>
-          ) : (
-            <>
-              <div className="auth-tabs" role="tablist" aria-label="Account access">
-                <button
-                  className={authView === 'login' ? 'auth-tab is-active' : 'auth-tab'}
-                  id="login-tab"
-                  type="button"
-                  role="tab"
-                  aria-selected={authView === 'login'}
-                  aria-controls="auth-form-panel"
-                  onClick={() => { setAuthView('login'); setAuthMessage(''); }}
-                >
-                  Login
-                </button>
-                <button
-                  className={authView === 'register' ? 'auth-tab is-active' : 'auth-tab'}
-                  id="register-tab"
-                  type="button"
-                  role="tab"
-                  aria-selected={authView === 'register'}
-                  aria-controls="auth-form-panel"
-                  onClick={() => { setAuthView('register'); setAuthMessage(''); }}
-                >
-                  Register
-                </button>
-              </div>
-              <form
-                className="auth-form"
-                id="auth-form-panel"
-                role="tabpanel"
-                aria-labelledby={`${authView}-tab`}
-                onSubmit={handleAuthSubmit}
-              >
-                {authView === 'register' && (
-                  <>
-                    <label className="settings-field" htmlFor="account-name">
-                      <span>Name</span>
-                      <input id="account-name" name="name" autoComplete="name" maxLength={100} required />
-                    </label>
-                    <label className="settings-field" htmlFor="phone-number">
-                      <span>Phone number</span>
-                      <input
-                        id="phone-number"
-                        name="phone"
-                        type="tel"
-                        inputMode="tel"
-                        autoComplete="tel"
-                        placeholder="+254 7XX XXX XXX"
-                        maxLength={20}
-                        required
-                      />
-                    </label>
-                  </>
-                )}
-                <label className="settings-field" htmlFor="account-email">
-                  <span>Email</span>
-                  <input
-                    id="account-email"
-                    name="email"
-                    type="email"
-                    autoComplete="email"
-                    maxLength={120}
-                    required
-                  />
-                </label>
-                <label className="settings-field" htmlFor="account-password">
-                  <span>Password</span>
-                  <input
-                    id="account-password"
-                    name="password"
-                    type="password"
-                    autoComplete={authView === 'login' ? 'current-password' : 'new-password'}
-                    minLength={8}
-                    required
-                  />
-                </label>
-                <button className="button-primary auth-submit" type="submit">
-                  {authView === 'login' ? 'Login' : 'Create account'}
-                </button>
-                <p className="settings-status auth-message" role="alert" aria-live="polite">{authMessage}</p>
-              </form>
-            </>
-          )}
+          <p>{user.email}</p>
+          <button className="button-danger" type="button" onClick={logout}>Log out</button>
         </section>
       </div>
     </div>

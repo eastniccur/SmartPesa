@@ -1,29 +1,23 @@
-const BASE_URL = import.meta.env.VITE_API_URL?.replace(/\/+$/, '');
+const BASE = import.meta.env.VITE_API_URL;
 
 export async function api(path, options = {}) {
-  if (!BASE_URL) {
-    const error = new Error('VITE_API_URL is not configured');
-    error.status = 0;
-    throw error;
+  let res;
+  try {
+    res = await fetch(BASE + path, {
+      headers: { 'Content-Type': 'application/json' },
+      ...options,
+    });
+  } catch {
+    const err = new Error('Cannot reach the server. Is the backend running?');
+    err.status = 0;
+    throw err;
   }
-
-  const response = await fetch(`${BASE_URL}${path}`, {
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      ...options.headers,
-    },
-  });
-
-  if (response.status === 204) return null;
-
-  const data = await response.json().catch(() => null);
-
-  if (!response.ok) {
-    const error = new Error(data?.error?.message || 'Request failed');
-    error.status = response.status;
-    throw error;
+  if (res.status === 204) return null;
+  const data = await res.json().catch(() => null);
+  if (!res.ok) {
+    const err = new Error(data?.error?.message || 'Request failed');
+    err.status = res.status;
+    throw err;
   }
-
   return data;
 }

@@ -1,18 +1,17 @@
 import { useEffect, useState } from 'react';
-import { BrowserRouter, Navigate, Outlet, Route, Routes } from 'react-router-dom';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { Navbar } from './components/Navbar';
+import { ToastProvider } from './components/Toast';
 import { HomePage } from './pages/HomePage';
 import { TransactionsPage } from './pages/TransactionsPage';
 import { BudgetPage } from './pages/BudgetPage';
 import { AnalysisPage } from './pages/AnalysisPage';
 import { SettingsPage } from './pages/SettingsPage';
-import { initialTransactions, initialBudgets } from './data/mockData';
-import { useAuth } from './context/useAuth';
+import { AuthProvider } from './context/AuthContext';
+import { RequireAuth } from './components/RequireAuth';
+import { LoginPage } from './pages/LoginPage';
 
-const initialCategories = [...new Set([
-  ...Object.keys(initialBudgets),
-  ...initialTransactions.map(({ category }) => category),
-])];
+const DEFAULT_CATEGORIES = ['Food', 'Shopping', 'Utilities', 'Entertainment', 'Transport'];
 
 function readStoredValue(key, fallback) {
   try {
@@ -31,52 +30,47 @@ function storeValue(key, value) {
   }
 }
 
-function RequireAuth() {
-  const { user } = useAuth();
-  return user ? <Outlet /> : <Navigate to="/settings" replace />;
-}
-
 function App() {
-  const [transactions, setTransactions] = useState(() => readStoredValue('smartpesa-transactions', initialTransactions));
-  const [budgets, setBudgets] = useState(() => readStoredValue('smartpesa-budgets', initialBudgets));
-  const [categories, setCategories] = useState(() => readStoredValue('smartpesa-categories', initialCategories));
+  // Local display preferences only. Budgets and transactions now live in the backend.
+  const [categories, setCategories] = useState(() => readStoredValue('smartpesa-categories', DEFAULT_CATEGORIES));
   const [currency, setCurrency] = useState(() => readStoredValue('smartpesa-currency', 'KES'));
 
-  useEffect(() => storeValue('smartpesa-transactions', transactions), [transactions]);
-  useEffect(() => storeValue('smartpesa-budgets', budgets), [budgets]);
   useEffect(() => storeValue('smartpesa-categories', categories), [categories]);
   useEffect(() => storeValue('smartpesa-currency', currency), [currency]);
 
   function resetApplicationData() {
-    setTransactions(initialTransactions);
-    setBudgets(initialBudgets);
-    setCategories(initialCategories);
+    setCategories(DEFAULT_CATEGORIES);
     setCurrency('KES');
   }
 
-  return (
-    <BrowserRouter>
-      <Navbar />
-      <main className="container">
-        <Routes>
-          <Route path="/settings" element={(
-            <SettingsPage
-              categories={categories}
-              setCategories={setCategories}
-              currency={currency}
-              setCurrency={setCurrency}
-              onReset={resetApplicationData}
-            />
-          )} />
-          <Route element={<RequireAuth />}>
-            <Route path="/" element={<HomePage transactions={transactions} budgets={budgets} />} />
-            <Route path="/transactions" element={<TransactionsPage transactions={transactions} setTransactions={setTransactions} categories={categories} />} />
-            <Route path="/budget" element={<BudgetPage transactions={transactions} budgets={budgets} setBudgets={setBudgets} />} />
-            <Route path="/analysis" element={<AnalysisPage transactions={transactions} budgets={budgets} />} />
-          </Route>
-        </Routes>
-      </main>
-    </BrowserRouter>
+    return (
+    <ToastProvider>
+      <AuthProvider>
+        <BrowserRouter>
+          <Navbar />
+          <main className="container">
+            <Routes>
+              <Route path="/login" element={<LoginPage />} />
+              <Route element={<RequireAuth />}>
+                <Route path="/" element={<HomePage />} />
+                <Route path="/budget" element={<BudgetPage />} />
+                <Route path="/transactions" element={<TransactionsPage />} />
+                <Route path="/analysis" element={<AnalysisPage />} />
+                <Route path="/settings" element={(
+                  <SettingsPage
+                    categories={categories}
+                    setCategories={setCategories}
+                    currency={currency}
+                    setCurrency={setCurrency}
+                    onReset={resetApplicationData}
+                  />
+                )} />
+              </Route>
+            </Routes>
+          </main>
+        </BrowserRouter>
+      </AuthProvider>
+    </ToastProvider>
   );
 }
 

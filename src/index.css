@@ -1670,3 +1670,28 @@ body {
     font-size: 1.2rem;
   }
 }
+<<<<<<< HEAD
+=======
+
+/* TOAST */
+.toast-container {
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  z-index: 1000;
+}
+.toast {
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  color: #fff;
+  background: #0a1f12;
+  border-left: 4px solid #00d084;
+  max-width: 320px;
+}
+.toast-error { border-left-color: #ff5252; }
+.toast-success { border-left-color: #00d084; }
+.loading { padding: 1rem; opacity: 0.8; }
+>>>>>>> fbdf4b6 (complete frontend intergration)
