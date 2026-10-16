@@ -1,20 +1,11 @@
-<<<<<<< HEAD
-import { useState } from 'react';
-=======
 import { useEffect, useState } from 'react';
 import { api } from '../services/api';
 import { useToast } from '../components/Toast';
 import { useAuth } from '../context/AuthContext';
->>>>>>> fbdf4b6 (complete frontend intergration)
 
 export function SettingsPage({ categories, setCategories, currency, setCurrency, onReset }) {
   const [categoryName, setCategoryName] = useState('');
   const [categoryMessage, setCategoryMessage] = useState('');
-<<<<<<< HEAD
-  const [authView, setAuthView] = useState('login');
-  const [authMessage, setAuthMessage] = useState('');
-  const [resetMessage, setResetMessage] = useState('');
-=======
   const [resetMessage, setResetMessage] = useState('');
   const showToast = useToast();
   const [profile, setProfile] = useState({ name: '', email: '', phone: '' });
@@ -60,7 +51,6 @@ export function SettingsPage({ categories, setCategories, currency, setCurrency,
 
   const updateProfileField = (field) => (event) =>
     setProfile({ ...profile, [field]: event.target.value });
->>>>>>> fbdf4b6 (complete frontend intergration)
 
   function addCategory(event) {
     event.preventDefault();
@@ -88,14 +78,6 @@ export function SettingsPage({ categories, setCategories, currency, setCurrency,
     setResetMessage('Application data restored to defaults.');
   }
 
-<<<<<<< HEAD
-  function handleAuthSubmit(event) {
-    event.preventDefault();
-    setAuthMessage(authView === 'login' ? 'Demo sign-in submitted.' : 'Demo account details submitted.');
-  }
-
-=======
->>>>>>> fbdf4b6 (complete frontend intergration)
   return (
     <div className="settings-page">
       <header className="settings-heading">
@@ -106,8 +88,6 @@ export function SettingsPage({ categories, setCategories, currency, setCurrency,
 
       <div className="settings-layout">
         <div className="settings-column">
-<<<<<<< HEAD
-=======
           <section className="settings-panel" aria-labelledby="profile-title">
             <div className="settings-panel-heading">
               <div>
@@ -138,7 +118,6 @@ export function SettingsPage({ categories, setCategories, currency, setCurrency,
               </form>
             )}
           </section>
->>>>>>> fbdf4b6 (complete frontend intergration)
           <section className="settings-panel" aria-labelledby="preferences-title">
             <div className="settings-panel-heading">
               <div>
@@ -209,76 +188,6 @@ export function SettingsPage({ categories, setCategories, currency, setCurrency,
           </section>
         </div>
 
-<<<<<<< HEAD
-        <section className="settings-panel auth-panel" aria-labelledby="auth-title">
-          <div className="settings-panel-heading">
-            <div>
-              <p className="settings-eyebrow">SECURE ACCESS</p>
-              <h2 id="auth-title">Welcome to SmartPesa</h2>
-            </div>
-          </div>
-          <div className="auth-tabs" role="tablist" aria-label="Account access">
-            <button
-              className={authView === 'login' ? 'auth-tab is-active' : 'auth-tab'}
-              id="login-tab"
-              type="button"
-              role="tab"
-              aria-selected={authView === 'login'}
-              aria-controls="auth-form-panel"
-              onClick={() => { setAuthView('login'); setAuthMessage(''); }}
-            >
-              Login
-            </button>
-            <button
-              className={authView === 'register' ? 'auth-tab is-active' : 'auth-tab'}
-              id="register-tab"
-              type="button"
-              role="tab"
-              aria-selected={authView === 'register'}
-              aria-controls="auth-form-panel"
-              onClick={() => { setAuthView('register'); setAuthMessage(''); }}
-            >
-              Register
-            </button>
-          </div>
-          <form
-            className="auth-form"
-            id="auth-form-panel"
-            role="tabpanel"
-            aria-labelledby={`${authView}-tab`}
-            onSubmit={handleAuthSubmit}
-          >
-            <label className="settings-field" htmlFor="phone-number">
-              <span>Phone number</span>
-              <input
-                id="phone-number"
-                type="tel"
-                inputMode="tel"
-                autoComplete="tel"
-                placeholder="+254 7XX XXX XXX"
-                pattern="[+0-9() -]{7,20}"
-                required
-              />
-            </label>
-            <label className="settings-field" htmlFor="account-pin">
-              <span>4-digit PIN</span>
-              <input
-                id="account-pin"
-                type="password"
-                inputMode="numeric"
-                autoComplete={authView === 'login' ? 'current-password' : 'new-password'}
-                placeholder="••••"
-                pattern="[0-9]{4}"
-                maxLength={4}
-                required
-              />
-            </label>
-            <button className="button-primary auth-submit" type="submit">
-              {authView === 'login' ? 'Login' : 'Create account'}
-            </button>
-            <p className="settings-status" role="status" aria-live="polite">{authMessage}</p>
-          </form>
-=======
         <section className="settings-panel auth-panel" aria-labelledby="account-title">
           <div className="settings-panel-heading">
             <div>
@@ -288,13 +197,8 @@ export function SettingsPage({ categories, setCategories, currency, setCurrency,
           </div>
           <p>{user.email}</p>
           <button className="button-danger" type="button" onClick={logout}>Log out</button>
->>>>>>> fbdf4b6 (complete frontend intergration)
         </section>
       </div>
     </div>
   );
 }
-<<<<<<< HEAD
-
-=======
->>>>>>> fbdf4b6 (complete frontend intergration)
