@@ -15,6 +15,7 @@ The app currently runs entirely in the browser and stores transactions, budgets,
 - **Idempotent demo sync:** Merge sample statement records without duplicating entries by `id` or `receiptNo`, including duplicates within an incoming batch.
 - **Spending dashboard and analysis:** Review budget and spending totals, recent activity, monthly expenses, and category-level totals.
 - **Persistent browser data:** Transactions, budgets, categories, and currency preferences are saved in browser storage.
+- **Account access:** Login and registration use the sibling Flask API's `/api/auth/login` and `/api/auth/register` endpoints. Set `VITE_API_BASE_URL` to override the default API origin (`http://localhost:5000`).
 - **Responsive and accessible interface:** CSS Grid layouts adapt to smaller screens. Forms, tables, status messages, screen-reader text, ARIA roles, and visible keyboard focus styles support accessible use.
 
 ## Tech Stack
@@ -109,6 +110,8 @@ npm run preview
 Transaction behavior is organized in the client-side service module `src/lib/transactions.js`. It contains helpers for validating manual entries, filtering transactions, and merging incoming records. The `mockSyncTransactions` export supplies fixed sample transactions for the **Sync M-Pesa Statement** UI action; it is deliberately a demonstration and does not contact Safaricom or retrieve a user's statement. Repeating the sync is idempotent because existing transaction IDs and receipt numbers are checked before records are added.
 
 The application state is managed in React and persisted to `localStorage`. This is convenient for a local demonstration, but it is not a secure or multi-user persistence layer.
+
+Authentication state is held in memory by `AuthContext` and is cleared when the page reloads or the user signs out. The current Flask API returns user details but does not issue a session or access token, so the frontend route guard is only a UI convenience and does not secure API endpoints. The demo transaction and budget data is still stored locally and is not scoped to individual accounts.
 
 ### What a live Daraja integration requires
 

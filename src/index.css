@@ -42,6 +42,24 @@ body {
   z-index: 100;
 }
 
+.navbar-account {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
+.navbar-account button {
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  padding: 6px 10px;
+  background: transparent;
+  color: var(--text-primary);
+  font: inherit;
+  cursor: pointer;
+}
+
 .navbar-brand {
   font-size: 1.3rem;
   font-weight: 800;
@@ -347,6 +365,20 @@ body {
 
 .auth-form .settings-status {
   margin-top: -10px;
+}
+
+.auth-form .auth-message:not(:empty) {
+  color: #fca5a5;
+}
+
+.auth-user {
+  display: grid;
+  gap: 8px;
+  color: var(--text-secondary);
+}
+
+.auth-user p {
+  margin: 0;
 }
 
 .transactions-page {
