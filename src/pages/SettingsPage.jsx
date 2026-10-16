@@ -1,6 +1,10 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/useAuth';
 
 export function SettingsPage({ categories, setCategories, currency, setCurrency, onReset }) {
+  const navigate = useNavigate();
+  const { user, login, register, logout } = useAuth();
   const [categoryName, setCategoryName] = useState('');
   const [categoryMessage, setCategoryMessage] = useState('');
   const [authView, setAuthView] = useState('login');
@@ -33,9 +37,29 @@ export function SettingsPage({ categories, setCategories, currency, setCurrency,
     setResetMessage('Application data restored to defaults.');
   }
 
-  function handleAuthSubmit(event) {
+  async function handleAuthSubmit(event) {
     event.preventDefault();
-    setAuthMessage(authView === 'login' ? 'Demo sign-in submitted.' : 'Demo account details submitted.');
+    const formData = new FormData(event.currentTarget);
+    const credentials = {
+      email: String(formData.get('email')).trim(),
+      password: String(formData.get('password')),
+    };
+
+    try {
+      if (authView === 'register') {
+        await register({
+          ...credentials,
+          name: String(formData.get('name')).trim(),
+          phone: String(formData.get('phone')).trim(),
+        });
+      } else {
+        await login(credentials);
+      }
+      setAuthMessage('');
+      navigate('/');
+    } catch (error) {
+      setAuthMessage(error instanceof Error ? error.message : 'Authentication failed.');
+    }
   }
 
   return (
@@ -121,74 +145,101 @@ export function SettingsPage({ categories, setCategories, currency, setCurrency,
         <section className="settings-panel auth-panel" aria-labelledby="auth-title">
           <div className="settings-panel-heading">
             <div>
-              <p className="settings-eyebrow">SECURE ACCESS</p>
-              <h2 id="auth-title">Welcome to SmartPesa</h2>
+              <p className="settings-eyebrow">ACCOUNT ACCESS</p>
+              <h2 id="auth-title">{user ? 'Your SmartPesa account' : 'Welcome to SmartPesa'}</h2>
             </div>
           </div>
-          <div className="auth-tabs" role="tablist" aria-label="Account access">
-            <button
-              className={authView === 'login' ? 'auth-tab is-active' : 'auth-tab'}
-              id="login-tab"
-              type="button"
-              role="tab"
-              aria-selected={authView === 'login'}
-              aria-controls="auth-form-panel"
-              onClick={() => { setAuthView('login'); setAuthMessage(''); }}
-            >
-              Login
-            </button>
-            <button
-              className={authView === 'register' ? 'auth-tab is-active' : 'auth-tab'}
-              id="register-tab"
-              type="button"
-              role="tab"
-              aria-selected={authView === 'register'}
-              aria-controls="auth-form-panel"
-              onClick={() => { setAuthView('register'); setAuthMessage(''); }}
-            >
-              Register
-            </button>
-          </div>
-          <form
-            className="auth-form"
-            id="auth-form-panel"
-            role="tabpanel"
-            aria-labelledby={`${authView}-tab`}
-            onSubmit={handleAuthSubmit}
-          >
-            <label className="settings-field" htmlFor="phone-number">
-              <span>Phone number</span>
-              <input
-                id="phone-number"
-                type="tel"
-                inputMode="tel"
-                autoComplete="tel"
-                placeholder="+254 7XX XXX XXX"
-                pattern="[+0-9() -]{7,20}"
-                required
-              />
-            </label>
-            <label className="settings-field" htmlFor="account-pin">
-              <span>4-digit PIN</span>
-              <input
-                id="account-pin"
-                type="password"
-                inputMode="numeric"
-                autoComplete={authView === 'login' ? 'current-password' : 'new-password'}
-                placeholder="••••"
-                pattern="[0-9]{4}"
-                maxLength={4}
-                required
-              />
-            </label>
-            <button className="button-primary auth-submit" type="submit">
-              {authView === 'login' ? 'Login' : 'Create account'}
-            </button>
-            <p className="settings-status" role="status" aria-live="polite">{authMessage}</p>
-          </form>
+          {user ? (
+            <div className="auth-user">
+              <p>Signed in as <strong>{user.name}</strong></p>
+              <p>{user.email}</p>
+              <button className="button-text-danger" type="button" onClick={logout}>Sign out</button>
+            </div>
+          ) : (
+            <>
+              <div className="auth-tabs" role="tablist" aria-label="Account access">
+                <button
+                  className={authView === 'login' ? 'auth-tab is-active' : 'auth-tab'}
+                  id="login-tab"
+                  type="button"
+                  role="tab"
+                  aria-selected={authView === 'login'}
+                  aria-controls="auth-form-panel"
+                  onClick={() => { setAuthView('login'); setAuthMessage(''); }}
+                >
+                  Login
+                </button>
+                <button
+                  className={authView === 'register' ? 'auth-tab is-active' : 'auth-tab'}
+                  id="register-tab"
+                  type="button"
+                  role="tab"
+                  aria-selected={authView === 'register'}
+                  aria-controls="auth-form-panel"
+                  onClick={() => { setAuthView('register'); setAuthMessage(''); }}
+                >
+                  Register
+                </button>
+              </div>
+              <form
+                className="auth-form"
+                id="auth-form-panel"
+                role="tabpanel"
+                aria-labelledby={`${authView}-tab`}
+                onSubmit={handleAuthSubmit}
+              >
+                {authView === 'register' && (
+                  <>
+                    <label className="settings-field" htmlFor="account-name">
+                      <span>Name</span>
+                      <input id="account-name" name="name" autoComplete="name" maxLength={100} required />
+                    </label>
+                    <label className="settings-field" htmlFor="phone-number">
+                      <span>Phone number</span>
+                      <input
+                        id="phone-number"
+                        name="phone"
+                        type="tel"
+                        inputMode="tel"
+                        autoComplete="tel"
+                        placeholder="+254 7XX XXX XXX"
+                        maxLength={20}
+                        required
+                      />
+                    </label>
+                  </>
+                )}
+                <label className="settings-field" htmlFor="account-email">
+                  <span>Email</span>
+                  <input
+                    id="account-email"
+                    name="email"
+                    type="email"
+                    autoComplete="email"
+                    maxLength={120}
+                    required
+                  />
+                </label>
+                <label className="settings-field" htmlFor="account-password">
+                  <span>Password</span>
+                  <input
+                    id="account-password"
+                    name="password"
+                    type="password"
+                    autoComplete={authView === 'login' ? 'current-password' : 'new-password'}
+                    minLength={8}
+                    required
+                  />
+                </label>
+                <button className="button-primary auth-submit" type="submit">
+                  {authView === 'login' ? 'Login' : 'Create account'}
+                </button>
+                <p className="settings-status auth-message" role="alert" aria-live="polite">{authMessage}</p>
+              </form>
+            </>
+          )}
         </section>
       </div>
     </div>
   );
 }
-

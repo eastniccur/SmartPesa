@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Navigate, Outlet, Route, Routes } from 'react-router-dom';
 import { Navbar } from './components/Navbar';
 import { HomePage } from './pages/HomePage';
 import { TransactionsPage } from './pages/TransactionsPage';
@@ -7,6 +7,7 @@ import { BudgetPage } from './pages/BudgetPage';
 import { AnalysisPage } from './pages/AnalysisPage';
 import { SettingsPage } from './pages/SettingsPage';
 import { initialTransactions, initialBudgets } from './data/mockData';
+import { useAuth } from './context/useAuth';
 
 const initialCategories = [...new Set([
   ...Object.keys(initialBudgets),
@@ -28,6 +29,11 @@ function storeValue(key, value) {
   } catch {
     // Keep the current session usable when browser storage is unavailable.
   }
+}
+
+function RequireAuth() {
+  const { user } = useAuth();
+  return user ? <Outlet /> : <Navigate to="/settings" replace />;
 }
 
 function App() {
@@ -53,10 +59,6 @@ function App() {
       <Navbar />
       <main className="container">
         <Routes>
-          <Route path="/" element={<HomePage transactions={transactions} budgets={budgets} />} />
-          <Route path="/transactions" element={<TransactionsPage transactions={transactions} setTransactions={setTransactions} categories={categories} />} />
-          <Route path="/budget" element={<BudgetPage transactions={transactions} budgets={budgets} setBudgets={setBudgets} />} />
-          <Route path="/analysis" element={<AnalysisPage transactions={transactions} budgets={budgets} />} />
           <Route path="/settings" element={(
             <SettingsPage
               categories={categories}
@@ -66,6 +68,12 @@ function App() {
               onReset={resetApplicationData}
             />
           )} />
+          <Route element={<RequireAuth />}>
+            <Route path="/" element={<HomePage transactions={transactions} budgets={budgets} />} />
+            <Route path="/transactions" element={<TransactionsPage transactions={transactions} setTransactions={setTransactions} categories={categories} />} />
+            <Route path="/budget" element={<BudgetPage transactions={transactions} budgets={budgets} setBudgets={setBudgets} />} />
+            <Route path="/analysis" element={<AnalysisPage transactions={transactions} budgets={budgets} />} />
+          </Route>
         </Routes>
       </main>
     </BrowserRouter>
