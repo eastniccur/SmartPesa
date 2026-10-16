@@ -56,8 +56,8 @@ export function HomePage() {
   );
 
   return (
-    <div>
-      <header style={{ marginBottom: '24px' }}>
+    <div className="home-page">
+      <header className="home-heading">
         <h1>M-Pesa Spending Overview</h1>
         <p style={{ color: 'var(--text-secondary)' }}>
           Track, manage, and analyze your day-to-day M-Pesa expenses.
@@ -87,8 +87,8 @@ export function HomePage() {
       </div>
 
       {/* Visual Progress Gauge */}
-      <div className="stat-card" style={{ marginTop: '20px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+      <div className="stat-card home-usage-card">
+        <div className="home-usage-heading">
           <span>Overall Budget Consumption</span>
           <strong>{percentageUsed}% Used</strong>
         </div>
@@ -105,21 +105,21 @@ export function HomePage() {
       </div>
 
       {/* Recent Activity List */}
-      <div className="stat-card" style={{ marginTop: '20px' }}>
+      <div className="stat-card home-recent-card">
         <h3 style={{ marginBottom: '16px' }}>Recent M-Pesa Transactions</h3>
         {dashboard.recent_transactions.length === 0 ? (
           <p style={{ color: 'var(--text-secondary)' }}>No transactions yet.</p>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          <div className="home-recent-list">
             {dashboard.recent_transactions.slice(0, 4).map((tx) => (
-              <div key={tx.id} style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: '12px', borderBottom: '1px solid var(--border-color)' }}>
-                <div>
+              <div className="home-recent-row" key={tx.id}>
+                <div className="home-recent-details">
                   <strong>{tx.description}</strong>
                   <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
                     {categoryById[tx.budget_id] || 'Uncategorized'} • {new Date(tx.occurred_at).toLocaleDateString('en-CA')}
                   </div>
                 </div>
-                <div style={{ fontWeight: '700', color: 'var(--danger)' }}>
+                <div className="home-recent-amount">
                   - {formatKES(tx.amount_cents)}
                 </div>
               </div>

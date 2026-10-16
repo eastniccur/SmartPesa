@@ -52,7 +52,7 @@ export function LoginPage() {
   }
 
   return (
-    <div className="settings-page">
+    <div className="settings-page auth-page">
       <section className="settings-panel auth-panel" aria-labelledby="auth-title">
         <div className="settings-panel-heading">
           <div>

@@ -1,154 +1,216 @@
 # SmartPesa
 
+SmartPesa is a personal finance and M-Pesa spending tracker built with React and Vite. The application helps users monitor daily expenses, set monthly budgets by category, review spending trends, and manage a simple profile and account flow. It is designed for a demo environment and is paired with a backend API for authentication, budgets, transactions, and user profile data.
+
 ## Overview
 
-SmartPesa is a modern, dark-themed React application for recording and reviewing everyday expenses. It presents spending summaries, category budgets, transaction history, and basic spending analysis in a responsive interface.
+SmartPesa is built to help people keep their money in check by combining a clean dashboard, category-based budgeting, spending analysis, and transaction history. It focuses on the Kenyan mobile money context, where M-Pesa is a daily payment tool, and offers a polished way to track how money moves in and out of a user's account.
 
-The app currently runs entirely in the browser and stores transactions, budgets, categories, and currency preferences in `localStorage`. It is a client-side demonstration, not a live connection to an M-Pesa account.
+The frontend is the presentation layer. It communicates with a backend service for persistent user data and business logic, while retaining lightweight browser-based preferences such as categories and display currency for a smoother experience.
 
 ## Key Features
 
-- **Manual expense logging:** Add a transaction with a title, positive amount, transaction type, and category. Amounts are validated as positive KES values with up to two decimal places.
-- **Transaction types:** Paybill, Till Number, Send Money, and Airtime.
-- **Dynamic categories:** Create and remove categories in Settings; the available categories are used by the transaction form.
-- **Live search and filtering:** Search transaction titles, receipt numbers, and categories while optionally filtering by a selected category.
-- **Idempotent demo sync:** Merge sample statement records without duplicating entries by `id` or `receiptNo`, including duplicates within an incoming batch.
-- **Spending dashboard and analysis:** Review budget and spending totals, recent activity, monthly expenses, and category-level totals.
-- **Persistent browser data:** Transactions, budgets, categories, and currency preferences are saved in browser storage.
-- **Account access:** Login and registration use the sibling Flask API's `/api/auth/login` and `/api/auth/register` endpoints. Set `VITE_API_BASE_URL` to override the default API origin (`http://localhost:5000`).
-- **Responsive and accessible interface:** CSS Grid layouts adapt to smaller screens. Forms, tables, status messages, screen-reader text, ARIA roles, and visible keyboard focus styles support accessible use.
+- User authentication and registration
+  - Login and register flows using `/api/auth/login` and `/api/auth/register`
+  - Protected routes with a guarded application layout
+- Dashboard summary cards
+  - Total monthly budget
+  - Total spent so far
+  - Remaining balance
+  - Progress indicator showing how much of the month’s budget has been consumed
+- Transaction management
+  - Add transactions with title, amount, type, and optional category assignment
+  - Supported transaction types include Paybill, Till Number, Send Money, Airtime, Withdrawal, and Other
+  - Search and filter by title, payment code, and category
+  - Delete existing transactions from the history list
+- Budget planning
+  - Create monthly budgets by category
+  - Set a limit in KES and monitor usage vs. limit
+  - Warning states for near-limit and over-budget categories
+  - Delete budgets without losing historical transaction records
+- Spending analysis
+  - View total expenses across all records
+  - Review category breakdown and biggest spending areas
+  - See current month totals and budget usage
+- Settings and customization
+  - Manage profile details (name, email, phone number)
+  - Add and remove transaction categories
+  - Change the default display currency
+  - Reset application preference data to defaults
+- M-Pesa demo flow
+  - “Pay with M-Pesa” modal for demo transactions
+  - Demo messaging clarifies that the app runs in a sandbox-style setup and does not send real money
 
 ## Tech Stack
 
-| Area | Technology |
-| --- | --- |
-| UI | React 19 |
-| Development server and build | Vite 8 |
-| Routing | React Router 7 |
-| Styling | CSS with shared design tokens and responsive layouts |
-| Tests | Node.js native test runner (`node:test`) |
+- React 19
+- Vite 8
+- React Router 7
+- JavaScript (ES modules)
+- CSS for responsive UI design
+- Backend API integration via Fetch
 
-## Folder Structure
+## Project Structure
 
 ```text
 .
+├── README.md
+├── LICENSE
 ├── index.html
 ├── package.json
 ├── public/
 │   ├── favicon.svg
 │   └── icons.svg
-└── src/
-    ├── App.jsx                  # Routes and shared app state
-    ├── App.css                  # App-level styles
-    ├── index.css                # Global styles and design tokens
-    ├── main.jsx                 # React entry point
-    ├── assets/                  # Images and static assets
-    ├── components/
-    │   └── Navbar.jsx           # Primary navigation
-    ├── data/
-    │   └── mockData.js          # Initial transactions and budgets
-    ├── lib/
-    │   ├── transactions.js      # Validation, filtering, and demo sync helpers
-    │   └── transactions.test.js # Native Node.js unit tests
-    └── pages/
-        ├── HomePage.jsx
-        ├── TransactionsPage.jsx
-        ├── TransactionsPage.css
-        ├── BudgetPage.jsx
-        ├── AnalysisPage.jsx
-        └── SettingsPage.jsx
+├── src/
+│   ├── App.jsx
+│   ├── App.css
+│   ├── index.css
+│   ├── main.jsx
+│   ├── components/
+│   │   ├── Loading.jsx
+│   │   ├── MpesaModal.jsx
+│   │   ├── Navbar.jsx
+│   │   ├── RequireAuth.jsx
+│   │   └── Toast.jsx
+│   ├── context/
+│   │   └── AuthContext.jsx
+│   ├── pages/
+│   │   ├── AnalysisPage.jsx
+│   │   ├── BudgetPage.jsx
+│   │   ├── HomePage.jsx
+│   │   ├── LoginPage.jsx
+│   │   ├── SettingsPage.jsx
+│   │   └── TransactionsPage.jsx
+│   ├── services/
+│   │   └── api.js
+│   ├── utils/
+│   │   └── money.js
+│   ├── config.js
+│   └── assets/
+│       └── images and icons
+└── vite.config.js
 ```
 
-## Getting Started
+## Requirements
 
-### Requirements
+Before running the app, make sure you have:
 
-- Node.js with npm
+- Node.js 18+
+- npm or another package manager compatible with the project
+- A working backend service exposing the SmartPesa API endpoints
 
-### Install dependencies
+## Environment Variables
+
+The frontend expects the backend base URL via the `VITE_API_URL` environment variable.
+
+Example:
+
+```bash
+VITE_API_URL=http://localhost:5000
+```
+
+The backend should expose routes such as:
+
+- `/api/auth/login`
+- `/api/auth/register`
+- `/api/users/profile`
+- `/api/transactions`
+- `/api/budgets`
+- `/api/dashboard`
+
+If the variable is not set, the app will not be able to talk to the backend.
+
+## Installation
+
+1. Clone the repository
+2. Navigate to the project folder
+3. Install dependencies:
 
 ```bash
 npm install
 ```
 
-### Start the development server
+## Running the Application
+
+Start the Vite development server:
 
 ```bash
 npm run dev
 ```
 
-Open the local URL printed by Vite in your browser. The server supports hot module replacement while you edit the app.
+Then open the local URL displayed in the terminal, usually:
 
-### Run the tests
-
-Run the transaction unit tests directly with Node's built-in test runner:
-
-```bash
-node --test src/lib/transactions.test.js
+```text
+http://localhost:5173
 ```
 
-Or use the project's npm script, which runs the same test file:
+## Production Build
 
-```bash
-npm test
-```
-
-### Build for production
+Create a production bundle:
 
 ```bash
 npm run build
 ```
 
-The production bundle is written to `dist/`. To preview the built app locally:
+Preview the built app locally:
 
 ```bash
 npm run preview
 ```
 
-## Architecture and M-Pesa Integration
+## Application Workflow
 
-Transaction behavior is organized in the client-side service module `src/lib/transactions.js`. It contains helpers for validating manual entries, filtering transactions, and merging incoming records. The `mockSyncTransactions` export supplies fixed sample transactions for the **Sync M-Pesa Statement** UI action; it is deliberately a demonstration and does not contact Safaricom or retrieve a user's statement. Repeating the sync is idempotent because existing transaction IDs and receipt numbers are checked before records are added.
+### 1. Sign in or create an account
+Users land on the login screen and can either sign in or register a new account. Protected routes redirect unauthenticated users back to the login page.
 
-The application state is managed in React and persisted to `localStorage`. This is convenient for a local demonstration, but it is not a secure or multi-user persistence layer.
+### 2. Review the dashboard
+The home screen provides a summary of monthly spend, remaining budget, and a quick look at recent transactions.
 
-Authentication state is held in memory by `AuthContext` and is cleared when the page reloads or the user signs out. The current Flask API returns user details but does not issue a session or access token, so the frontend route guard is only a UI convenience and does not secure API endpoints. The demo transaction and budget data is still stored locally and is not scoped to individual accounts.
+### 3. Record transactions
+Users can log each transaction by entering a description, amount, transaction type, and budget category when relevant.
 
-### What a live Daraja integration requires
+### 4. Set budgets
+The budget page allows users to add monthly spending limits for different categories. Budgets are compared against actual spend so users can quickly see which categories are over or near their limit.
 
-A production M-Pesa Daraja integration must use a secure, publicly reachable backend proxy rather than calling Daraja directly from the browser. The backend should:
+### 5. Analyze trends
+The analysis page groups expenditures by category and highlights the month’s overall budget performance. This helps users identify the areas where they spend the most.
 
-1. Keep OAuth client credentials and access-token handling on the server, never in frontend code or browser storage.
-2. Make authenticated Daraja API requests on behalf of the application and return only the necessary data to the client.
-3. Expose a secure, publicly reachable callback endpoint and configure its URL as the Daraja `CallBackURL` for relevant requests.
-4. Validate and process Safaricom webhook callbacks server-side, with appropriate verification, error handling, and persistence.
-5. Apply authorization, input validation, and operational logging before exposing transaction data to users.
+### 6. Adjust settings
+The settings page supports profile updates, category management, default currency selection, and resetting the app defaults.
 
-Using a backend avoids browser CORS restrictions and prevents secret exposure. The current mock service can serve as the UI-facing boundary to replace or connect to a real backend, but it does not implement OAuth, callback handling, or live statement retrieval.
+## Backend Integration Notes
+
+SmartPesa is designed to work with a backend service rather than relying only on browser storage. The frontend uses Fetch calls through `src/services/api.js` and expects JSON responses from the API layer.
+
+This architecture supports:
+
+- secure backend-side user management
+- persistent transaction and budget records
+- profile updates and user-specific account data
+- future integration with a real M-Pesa or Daraja backend flow
+
+## M-Pesa and Demo Safety
+
+This project is a financial tracking interface and a demonstration client. The “Pay with M-Pesa” flow is not a production payment integration and does not trigger real-money transactions. It is intended for sandbox-style testing and UI demonstration.
+
+A real production M-Pesa integration should be implemented on a secure backend and must:
+
+- keep credentials and access tokens on the server
+- validate callbacks on the backend
+- use secure HTTPS endpoints
+- enforce user authentication and authorization
+- follow Safaricom Daraja requirements for OAuth and callback URLs
+
+## Contributing
+
+Contributions are welcome. To contribute:
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Run the build and verify they work as expected
+5. Submit a pull request with a clear summary
 
 ## License
 
-This project is licensed under the MIT License.
-
-```text
-MIT License
-
-Copyright (c) 2026 SmartPesa contributors
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-```
+This project is licensed under the MIT License. See [LICENSE](./LICENSE) for the full text.

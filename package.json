@@ -1,5 +1,5 @@
 {
-  "name": "smartpesa",
+  "name": "tempo-pr",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -7,8 +7,7 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
-    "preview": "vite preview",
-    "test": "node --test src/lib/transactions.test.js"
+    "preview": "vite preview"
   },
   "dependencies": {
     "react": "^19.2.8",
