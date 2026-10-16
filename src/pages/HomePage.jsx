@@ -1,15 +1,59 @@
-import React from 'react';
+import { useEffect, useState } from 'react';
+import { api } from '../services/api';
+import { formatKES } from '../utils/money';
+import { useToast } from '../components/Toast';
+import { Loading } from '../components/Loading';
+import { currentMonth } from '../config';
+import { useAuth } from '../context/AuthContext';
 
-export function HomePage({ transactions, budgets }) {
-  // 1. Calculate Total Spent across all transactions
-  const totalSpent = transactions.reduce((acc, curr) => acc + curr.amount, 0);
+export function HomePage() {
+  const { user } = useAuth();
+  const userId = user.id;
+  const showToast = useToast();
+  const [dashboard, setDashboard] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
-  // 2. Calculate Total Budgeted Amount across all categories
-  const totalBudget = Object.values(budgets).reduce((acc, curr) => acc + curr, 0);
+  useEffect(() => {
+    let cancelled = false;
 
-  // 3. Calculate Remaining Budget
-  const remainingBudget = totalBudget - totalSpent;
-  const percentageUsed = Math.min(Math.round((totalSpent / totalBudget) * 100), 100);
+    async function load() {
+      try {
+        const data = await api(`/api/dashboard?user_id=${userId}&month=${currentMonth()}`);
+        if (!cancelled) {
+          setDashboard(data);
+          setError('');
+        }
+      } catch (err) {
+        if (!cancelled) {
+          setError(err.message);
+          showToast(err.message);
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    }
+
+    load();
+    return () => { cancelled = true; };
+  }, [showToast, userId]);
+
+  if (loading) return <Loading text="Loading your overview..." />;
+  if (error || !dashboard) {
+    return <p style={{ color: 'var(--danger)' }}>Could not load the dashboard: {error}</p>;
+  }
+
+  const totalBudget = dashboard.total_budget_cents;
+  const totalSpent = dashboard.total_spent_cents;
+  const remainingBudget = dashboard.remaining_cents;
+  const percentageUsed = totalBudget
+    ? Math.min(Math.round((totalSpent / totalBudget) * 100), 100)
+    : 0;
+
+  // Transactions only carry budget_id, so look the category name up from the budgets
+  const categoryById = Object.fromEntries(
+    dashboard.budgets.map((b) => [b.id, b.category])
+  );
 
   return (
     <div>
@@ -24,20 +68,20 @@ export function HomePage({ transactions, budgets }) {
       <div className="dashboard-grid">
         <div className="stat-card">
           <h4>Total Monthly Budget</h4>
-          <div className="amount">KES {totalBudget.toLocaleString()}</div>
+          <div className="amount">{formatKES(totalBudget)}</div>
         </div>
 
         <div className="stat-card">
           <h4>Total Spent So Far</h4>
           <div className="amount" style={{ color: totalSpent > totalBudget ? 'var(--danger)' : 'var(--text-primary)' }}>
-            KES {totalSpent.toLocaleString()}
+            {formatKES(totalSpent)}
           </div>
         </div>
 
         <div className="stat-card">
           <h4>Remaining Balance</h4>
           <div className="amount amount-highlight">
-            KES {remainingBudget.toLocaleString()}
+            {formatKES(remainingBudget)}
           </div>
         </div>
       </div>
@@ -49,13 +93,13 @@ export function HomePage({ transactions, budgets }) {
           <strong>{percentageUsed}% Used</strong>
         </div>
         <div style={{ width: '100%', height: '12px', background: '#334155', borderRadius: '6px', overflow: 'hidden' }}>
-          <div 
-            style={{ 
-              width: `${percentageUsed}%`, 
-              height: '100%', 
+          <div
+            style={{
+              width: `${percentageUsed}%`,
+              height: '100%',
               backgroundColor: percentageUsed > 90 ? 'var(--danger)' : 'var(--mpesa-green)',
-              transition: 'width 0.4s ease'
-            }} 
+              transition: 'width 0.4s ease',
+            }}
           />
         </div>
       </div>
@@ -63,23 +107,26 @@ export function HomePage({ transactions, budgets }) {
       {/* Recent Activity List */}
       <div className="stat-card" style={{ marginTop: '20px' }}>
         <h3 style={{ marginBottom: '16px' }}>Recent M-Pesa Transactions</h3>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-          {transactions.slice(0, 4).map((tx) => (
-            <div key={tx.id} style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: '12px', borderBottom: '1px solid var(--border-color)' }}>
-              <div>
-                <strong>{tx.title}</strong>
-                <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-                  {tx.category} • {tx.date}
+        {dashboard.recent_transactions.length === 0 ? (
+          <p style={{ color: 'var(--text-secondary)' }}>No transactions yet.</p>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            {dashboard.recent_transactions.slice(0, 4).map((tx) => (
+              <div key={tx.id} style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: '12px', borderBottom: '1px solid var(--border-color)' }}>
+                <div>
+                  <strong>{tx.description}</strong>
+                  <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                    {categoryById[tx.budget_id] || 'Uncategorized'} • {new Date(tx.occurred_at).toLocaleDateString('en-CA')}
+                  </div>
+                </div>
+                <div style={{ fontWeight: '700', color: 'var(--danger)' }}>
+                  - {formatKES(tx.amount_cents)}
                 </div>
               </div>
-              <div style={{ fontWeight: '700', color: 'var(--danger)' }}>
-                - KES {tx.amount.toLocaleString()}
-              </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
 }
-

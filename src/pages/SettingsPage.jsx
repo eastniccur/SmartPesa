@@ -1,11 +1,66 @@
+<<<<<<< HEAD
 import { useState } from 'react';
+=======
+import { useEffect, useState } from 'react';
+import { api } from '../services/api';
+import { useToast } from '../components/Toast';
+import { useAuth } from '../context/AuthContext';
+>>>>>>> fbdf4b6 (complete frontend intergration)
 
 export function SettingsPage({ categories, setCategories, currency, setCurrency, onReset }) {
   const [categoryName, setCategoryName] = useState('');
   const [categoryMessage, setCategoryMessage] = useState('');
+<<<<<<< HEAD
   const [authView, setAuthView] = useState('login');
   const [authMessage, setAuthMessage] = useState('');
   const [resetMessage, setResetMessage] = useState('');
+=======
+  const [resetMessage, setResetMessage] = useState('');
+  const showToast = useToast();
+  const [profile, setProfile] = useState({ name: '', email: '', phone: '' });
+  const [profileLoading, setProfileLoading] = useState(true);
+  const [profileSaving, setProfileSaving] = useState(false);
+  const [profileMessage, setProfileMessage] = useState('');
+  const { user, login, logout } = useAuth();
+  const userId = user.id;
+
+  useEffect(() => {
+    let cancelled = false;
+    api(`/api/users/profile?user_id=${userId}`)
+      .then((data) => {
+        if (!cancelled) {
+          setProfile({ name: data.user.name, email: data.user.email, phone: data.user.phone || '' });
+        }
+      })
+      .catch((err) => { if (!cancelled) showToast(err.message); })
+      .finally(() => { if (!cancelled) setProfileLoading(false); });
+    return () => { cancelled = true; };
+  }, [showToast, userId]);
+
+  async function saveProfile(event) {
+    event.preventDefault();
+    setProfileSaving(true);
+    setProfileMessage('');
+    try {
+      const data = await api(`/api/users/profile?user_id=${userId}`, {
+        method: 'PUT',
+        body: JSON.stringify(profile),
+      });
+      setProfile({ name: data.user.name, email: data.user.email, phone: data.user.phone || '' });
+      login(data.user);
+      setProfileMessage('Profile saved.');
+      showToast('Profile saved', 'success');
+    } catch (err) {
+      setProfileMessage(err.message);
+      showToast(err.message);
+    } finally {
+      setProfileSaving(false);
+    }
+  }
+
+  const updateProfileField = (field) => (event) =>
+    setProfile({ ...profile, [field]: event.target.value });
+>>>>>>> fbdf4b6 (complete frontend intergration)
 
   function addCategory(event) {
     event.preventDefault();
@@ -33,11 +88,14 @@ export function SettingsPage({ categories, setCategories, currency, setCurrency,
     setResetMessage('Application data restored to defaults.');
   }
 
+<<<<<<< HEAD
   function handleAuthSubmit(event) {
     event.preventDefault();
     setAuthMessage(authView === 'login' ? 'Demo sign-in submitted.' : 'Demo account details submitted.');
   }
 
+=======
+>>>>>>> fbdf4b6 (complete frontend intergration)
   return (
     <div className="settings-page">
       <header className="settings-heading">
@@ -48,6 +106,39 @@ export function SettingsPage({ categories, setCategories, currency, setCurrency,
 
       <div className="settings-layout">
         <div className="settings-column">
+<<<<<<< HEAD
+=======
+          <section className="settings-panel" aria-labelledby="profile-title">
+            <div className="settings-panel-heading">
+              <div>
+                <p className="settings-eyebrow">YOUR ACCOUNT</p>
+                <h2 id="profile-title">Profile</h2>
+              </div>
+            </div>
+            {profileLoading ? (
+              <p role="status">Loading profile...</p>
+            ) : (
+              <form className="category-form" onSubmit={saveProfile}>
+                <label className="settings-field" htmlFor="profile-name">
+                  <span>Full name</span>
+                  <input id="profile-name" value={profile.name} onChange={updateProfileField('name')} maxLength={100} required />
+                </label>
+                <label className="settings-field" htmlFor="profile-email">
+                  <span>Email</span>
+                  <input id="profile-email" type="email" value={profile.email} onChange={updateProfileField('email')} required />
+                </label>
+                <label className="settings-field" htmlFor="profile-phone">
+                  <span>Phone number</span>
+                  <input id="profile-phone" type="tel" value={profile.phone} onChange={updateProfileField('phone')} placeholder="0712 345 678" required />
+                </label>
+                <button className="button-primary" type="submit" disabled={profileSaving}>
+                  {profileSaving ? 'Saving...' : 'Save profile'}
+                </button>
+                <p className="settings-status" role="status" aria-live="polite">{profileMessage}</p>
+              </form>
+            )}
+          </section>
+>>>>>>> fbdf4b6 (complete frontend intergration)
           <section className="settings-panel" aria-labelledby="preferences-title">
             <div className="settings-panel-heading">
               <div>
@@ -118,6 +209,7 @@ export function SettingsPage({ categories, setCategories, currency, setCurrency,
           </section>
         </div>
 
+<<<<<<< HEAD
         <section className="settings-panel auth-panel" aria-labelledby="auth-title">
           <div className="settings-panel-heading">
             <div>
@@ -186,9 +278,23 @@ export function SettingsPage({ categories, setCategories, currency, setCurrency,
             </button>
             <p className="settings-status" role="status" aria-live="polite">{authMessage}</p>
           </form>
+=======
+        <section className="settings-panel auth-panel" aria-labelledby="account-title">
+          <div className="settings-panel-heading">
+            <div>
+              <p className="settings-eyebrow">SIGNED IN AS</p>
+              <h2 id="account-title">{user.name}</h2>
+            </div>
+          </div>
+          <p>{user.email}</p>
+          <button className="button-danger" type="button" onClick={logout}>Log out</button>
+>>>>>>> fbdf4b6 (complete frontend intergration)
         </section>
       </div>
     </div>
   );
 }
+<<<<<<< HEAD
 
+=======
+>>>>>>> fbdf4b6 (complete frontend intergration)

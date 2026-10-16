@@ -1,154 +1,141 @@
-import { useState } from "react";
-import "../styles/theme.css";
+import { useEffect, useRef, useState } from 'react';
+import { api } from '../services/api';
+import { toCents } from '../utils/money';
+import { useAuth } from '../context/AuthContext';
 
-export default function MpesaModal({
-  isOpen,
-  onClose,
-  onSubmit,
-}) {
-  const [phone, setPhone] = useState("");
-  const [amount, setAmount] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-  const [message, setMessage] = useState("");
+const POLL_MS = 2000;
+const MAX_POLLS = 30; // 30 x 2s = 60 seconds
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+const emptyForm = { phone: '', amount: '', description: '', budget_id: '' };
 
-  if (!isOpen) return null;
+export function MpesaModal({ open, onClose, budgets = [], onCompleted }) {
+  const { user } = useAuth();
+  const userId = user.id;
+  const [form, setForm] = useState(emptyForm);
+  const [phase, setPhase] = useState('form'); // form | sending | waiting | failed
+  const [message, setMessage] = useState('');
+  const activeRef = useRef(false);
 
-  async function handleSubmit(event) {
+  useEffect(() => {
+    if (open) {
+      setForm(emptyForm);
+      setPhase('form');
+      setMessage('');
+    }
+    // Closing the modal (or leaving the page) stops any polling loop
+    return () => { activeRef.current = false; };
+  }, [open]);
+
+  if (!open) return null;
+
+  const update = (event) => setForm({ ...form, [event.target.name]: event.target.value });
+
+  function finish() {
+    activeRef.current = false;
+    onCompleted();
+    onClose();
+  }
+
+  function fail(text) {
+    activeRef.current = false;
+    setPhase('failed');
+    setMessage(text);
+  }
+
+  async function submit(event) {
     event.preventDefault();
-    setError("");
-    setMessage("");
-
-    const numericAmount = Number(amount);
-    const normalizedPhone = phone.replace(/[\s-]/g, "");
-
-    if (!/^(\+?254|0)7\d{8}$/.test(normalizedPhone)) {
-      setError("Enter a valid Kenyan mobile number.");
+    const shillings = Number(form.amount);
+    if (!Number.isInteger(shillings) || shillings < 1) {
+      setMessage('Enter a whole-shilling amount of at least 1.');
       return;
     }
 
-    if (!Number.isFinite(numericAmount) || numericAmount <= 0) {
-      setError("Enter a valid payment amount.");
-      return;
-    }
-
-    if (typeof onSubmit !== "function") {
-      setError("M-Pesa payment is not connected yet.");
-      return;
-    }
-
-    setLoading(true);
+    setPhase('sending');
+    setMessage('');
+    activeRef.current = true;
 
     try {
-      await onSubmit({
-        phone_number: normalizedPhone,
-        amount: Math.round(numericAmount),
-      });
+      const body = {
+        user_id: userId,
+        amount_cents: toCents(shillings),
+        description: form.description.trim() || 'M-Pesa payment',
+      };
+      if (form.phone.trim()) body.phone = form.phone.trim();
+      if (form.budget_id) body.budget_id = Number(form.budget_id);
 
-      setMessage("Payment request submitted. Check your phone.");
-      setPhone("");
-      setAmount("");
+      const data = await api('/api/mpesa/stkpush', { method: 'POST', body: JSON.stringify(body) });
+
+      // Simulate mode answers immediately; real Daraja answers "pending"
+      if (data.status === 'completed') return finish();
+      if (data.status !== 'pending') {
+        return fail(data.result?.message || 'The payment was not completed.');
+      }
+
+      setPhase('waiting');
+      for (let i = 0; i < MAX_POLLS; i += 1) {
+        await sleep(POLL_MS);
+        if (!activeRef.current) return; // modal was closed
+        const result = await api(`/api/mpesa/status/${data.checkout_request_id}`);
+        if (result.status === 'completed') return finish();
+        if (result.status === 'failed') {
+          return fail(result.message || 'The payment was cancelled or failed.');
+        }
+      }
+      fail('Timed out waiting for the payment. Check your phone, then the transaction list.');
     } catch (err) {
-      setError(err.message || "Unable to start M-Pesa payment.");
-    } finally {
-      setLoading(false);
+      fail(err.message);
     }
   }
 
-  function handleClose() {
-    if (loading) return;
-
-    setError("");
-    setMessage("");
-    onClose?.();
-  }
+  const busy = phase === 'sending' || phase === 'waiting';
 
   return (
-    <div
-      className="mpesa-overlay"
-      onClick={(event) => {
-        if (event.target === event.currentTarget) handleClose();
-      }}
-    >
-      <section
-        className="mpesa-modal form-card"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="mpesa-title"
-      >
-        <div className="mpesa-header">
-          <div>
-            <h2 id="mpesa-title">Pay with M-Pesa</h2>
-            <p>Enter your phone number and payment amount.</p>
+    <div className="mpesa-overlay" role="presentation">
+      <div className="mpesa-modal" role="dialog" aria-modal="true" aria-labelledby="mpesa-title">
+        <h2 id="mpesa-title">Pay with M-Pesa</h2>
+
+        {phase === 'waiting' ? (
+          <p role="status">Check your phone and enter your M-Pesa PIN. Waiting for confirmation...</p>
+        ) : phase === 'sending' ? (
+          <p role="status">Sending the payment request...</p>
+        ) : (
+          <form onSubmit={submit}>
+            <label>Phone number
+              <input name="phone" type="tel" value={form.phone} onChange={update}
+                placeholder="0712 345 678 (blank uses your profile)" />
+            </label>
+            <label>Amount (whole KES)
+              <input name="amount" type="number" min="1" step="1" value={form.amount}
+                onChange={update} placeholder="100" required />
+            </label>
+            <label>Description
+              <input name="description" value={form.description} onChange={update}
+                placeholder="e.g. Naivas shopping" maxLength={200} />
+            </label>
+            <label>Budget category
+              <select name="budget_id" value={form.budget_id} onChange={update}>
+                <option value="">No budget (uncategorized)</option>
+                {budgets.map((b) => <option key={b.id} value={b.id}>{b.category}</option>)}
+              </select>
+            </label>
+            {message && <p className="mpesa-error" role="alert">{message}</p>}
+            <div className="mpesa-modal-actions">
+              <button className="transactions-clear" type="button" onClick={onClose}>Cancel</button>
+              <button className="button-primary" type="submit">
+                {phase === 'failed' ? 'Try again' : 'Send payment request'}
+              </button>
+            </div>
+          </form>
+        )}
+
+        {phase === 'failed' && <p className="mpesa-error" role="alert">{message}</p>}
+
+        {busy && (
+          <div className="mpesa-modal-actions">
+            <button className="transactions-clear" type="button" onClick={onClose}>Close</button>
           </div>
-
-          <button
-            type="button"
-            className="mpesa-close"
-            onClick={handleClose}
-            disabled={loading}
-            aria-label="Close payment form"
-          >
-            ×
-          </button>
-        </div>
-
-        <form onSubmit={handleSubmit}>
-          <div className="form-group">
-            <label htmlFor="mpesa-phone">M-Pesa phone number</label>
-            <input
-              id="mpesa-phone"
-              type="tel"
-              value={phone}
-              onChange={(event) => setPhone(event.target.value)}
-              placeholder="0712345678"
-              autoComplete="tel"
-              required
-            />
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="mpesa-amount">Amount (KES)</label>
-            <input
-              id="mpesa-amount"
-              type="number"
-              min="1"
-              step="1"
-              value={amount}
-              onChange={(event) => setAmount(event.target.value)}
-              placeholder="e.g. 500"
-              required
-            />
-          </div>
-
-          {error && (
-            <p className="error-message" role="alert">
-              {error}
-            </p>
-          )}
-
-          {message && (
-            <p className="success-message" role="status">
-              {message}
-            </p>
-          )}
-
-          <div className="form-actions">
-            <button type="submit" disabled={loading}>
-              {loading ? "Sending request..." : "Request Payment"}
-            </button>
-
-            <button
-              type="button"
-              className="mpesa-cancel"
-              onClick={handleClose}
-              disabled={loading}
-            >
-              Cancel
-            </button>
-          </div>
-        </form>
-      </section>
+        )}
+      </div>
     </div>
   );
 }
