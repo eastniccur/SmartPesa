@@ -10,6 +10,7 @@ export async function api(path, options = {}) {
   } catch {
     const err = new Error('Cannot reach the server. Is the backend running?');
     err.status = 0;
+    err.code = 'network';
     throw err;
   }
   if (res.status === 204) return null;
@@ -17,6 +18,7 @@ export async function api(path, options = {}) {
   if (!res.ok) {
     const err = new Error(data?.error?.message || 'Request failed');
     err.status = res.status;
+    err.code = data?.error?.code;
     throw err;
   }
   return data;

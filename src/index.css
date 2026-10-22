@@ -2088,3 +2088,69 @@ body {
     width: calc(100vw - 1.5rem);
   }
 }
+
+.field-error {
+  color: #ff5252;
+  font-size: 0.85rem;
+  margin-top: 4px;
+}
+
+.settings-field input[aria-invalid='true'] {
+  border-color: #ff5252;
+}
+
+.auth-field {
+  min-width: 0;
+}
+
+.auth-password-control {
+  position: relative;
+}
+
+.auth-password-control input {
+  padding-right: 112px;
+}
+
+.auth-password-toggle,
+.auth-inline-action,
+.auth-link {
+  border: 0;
+  background: transparent;
+  color: #00d084;
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.auth-password-toggle {
+  position: absolute;
+  top: 50%;
+  right: 10px;
+  padding: 5px 7px;
+  border-radius: 4px;
+  background: #0a1f12;
+  transform: translateY(-50%);
+}
+
+.auth-inline-action,
+.auth-link {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.auth-inline-action {
+  padding: 2px 5px;
+  border-radius: 4px;
+  background: #0a1f12;
+}
+
+.auth-form-error {
+  color: #ff8a80;
+  font-size: 0.88rem;
+}
+
+.auth-submit:disabled {
+  cursor: wait;
+  opacity: 0.7;
+}
